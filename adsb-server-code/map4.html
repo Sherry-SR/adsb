@@ -1,0 +1,117 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+		<style type="text/css">
+		body, html {width: 100%;height: 100%;margin:0;font-family:"微软雅黑";}
+		    #allmap{width:100%;height:500px;}
+    	</style>
+		<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=zsnKUa5OyBxYuQkEk8U1raQ6">
+		</script>
+		<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=yaDRGoon5YoRzAAwH781yUgn">
+		</script>
+		<title>探测周边飞机_SEU</title>
+	</head>
+	<body>
+		<div id="allmap"></div>
+		<div id="info">
+			<div>
+				<p id="geninfo"></p>
+			</div>
+		</div>
+	</body>
+</html>
+<script type="text/javascript">
+
+	CenterLat=118.814;
+	CenterLon=31.890;
+
+	function Aircraft(Time,Hex,Mode,Squawk,Flight,Altitude,Speed,Heading,Latitude,Longtitute)
+	{
+	this.Time=Time;
+	this.Hex=Hex;
+	this.Mode=Mode;
+	this.Squawk=Squawk;
+	this.Flight=Flight;	
+	this.Altitude=Altitude;	
+	this.Speed=Speed;	
+	this.Heading=Heading;	
+	this.Latitude=Latitude;	
+	this.Longtitute=Longtitute;	
+	}
+
+	function addPlane(point,Heading){
+		var vectorPlane = new BMap.Marker(point,{
+			icon: new BMap.Symbol(BMap_Symbol_SHAPE_PLANE,{
+				scale: 1.5,
+			    rotation: Heading
+			})
+		});
+		map.addOverlay(vectorPlane);
+	}
+
+	function deletePlane(){
+		var allOverlay = map.getOverlays();
+		for (var i = 0; i < allOverlay.length -1; i++){
+			map.removeOverlay(allOverlay[i]);
+		}
+	}
+
+	function refreshGeneralInfo(NumPlanes){
+		var i=document.getElementById('geninfo');
+		i.innerHTML = NumPlanes + ' planes on screen.';
+	}
+
+	function fetchData(){
+		if (window.XMLHttpRequest)
+		  {// code for IE7+, Firefox, Chrome, Opera, Safari
+		  xmlhttp=new XMLHttpRequest();
+		  }
+		else
+		  {// code for IE6, IE5
+		  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+		  }
+
+		tmpstr="currentData.xml?token="+Math.random();
+		xmlhttp.open("GET",tmpstr,false);
+		xmlhttp.send();
+		xmlDoc=xmlhttp.responseXML;
+		if(xmlDoc.getElementsByTagName("Number")[0]==undefined){
+			return
+		}
+		var NumPlanes = xmlDoc.getElementsByTagName("Number")[0].childNodes[0].nodeValue;
+		Planes=new Array();
+		for(i=0;i<NumPlanes;i++){
+			Time=xmlDoc.getElementsByTagName("Time")[i].childNodes[0]==undefined?'':xmlDoc.getElementsByTagName("Time")[i].childNodes[0].nodeValue;
+			Hex=xmlDoc.getElementsByTagName("Hex")[i].childNodes[0]==undefined?'':xmlDoc.getElementsByTagName("Hex")[i].childNodes[0].nodeValue;
+			Mode=xmlDoc.getElementsByTagName("Mode")[i].childNodes[0]==undefined?'':xmlDoc.getElementsByTagName("Mode")[i].childNodes[0].nodeValue;
+			Squawk=xmlDoc.getElementsByTagName("Squawk")[i].childNodes[0]==undefined?'':xmlDoc.getElementsByTagName("Squawk")[i].childNodes[0].nodeValue;
+			Flight=xmlDoc.getElementsByTagName("Flight")[i].childNodes[0]==undefined?'':xmlDoc.getElementsByTagName("Flight")[i].childNodes[0].nodeValue;
+			Altitude=xmlDoc.getElementsByTagName("Altitude")[i].childNodes[0]==undefined?'':xmlDoc.getElementsByTagName("Altitude")[i].childNodes[0].nodeValue;
+			Speed=xmlDoc.getElementsByTagName("Speed")[i].childNodes[0]==undefined?'':xmlDoc.getElementsByTagName("Speed")[i].childNodes[0].nodeValue;
+			Heading=xmlDoc.getElementsByTagName("Heading")[i].childNodes[0]==undefined?'':xmlDoc.getElementsByTagName("Heading")[i].childNodes[0].nodeValue;
+			Latitude=xmlDoc.getElementsByTagName("Latitude")[i].childNodes[0]==undefined?'':xmlDoc.getElementsByTagName("Latitude")[i].childNodes[0].nodeValue;
+			Longtitute=xmlDoc.getElementsByTagName("Longtitute")[i].childNodes[0]==undefined?'':xmlDoc.getElementsByTagName("Longtitute")[i].childNodes[0].nodeValue;
+			Planes[i]=new Aircraft(Time,Hex,Mode,Squawk,Flight,Altitude,Speed,Heading,Latitude,Longtitute);
+		}
+
+		deletePlane();
+
+		for (var i = 0;i < NumPlanes;i++)
+		{
+			var point = new BMap.Point(Planes[i].Longtitute,Planes[i].Latitude);
+			addPlane(point,Planes[i].Heading);
+		}
+		refreshGeneralInfo(NumPlanes);
+	}
+
+
+	var map = new BMap.Map("allmap");
+	var point = new BMap.Point(CenterLat, CenterLon);
+	map.centerAndZoom(point, 9);
+	map.enableScrollWheelZoom();
+	// 百度地图API功能
+	window.setInterval(fetchData,1000);
+</script>
